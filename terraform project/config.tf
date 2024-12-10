@@ -5,7 +5,6 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
-# Create 3 ==> EC2
 resource "aws_instance" "demo-server" {
     ami = "ami-053b0d53c279acc90"
     instance_type = "t2.micro"
@@ -18,16 +17,24 @@ for_each = toset(["jenkins-master", "build-slave", "ansible"])
      Name = "${each.key}"
    }
 }
-# Create Security Group
+
 resource "aws_security_group" "demo-sg" {
   name        = "demo-sg"
   description = "SSH Access"
   vpc_id = aws_vpc.dpp-vpc.id 
   
   ingress {
-    description      = "Shh access"
+    description      = "SHH access"
     from_port        = 22
     to_port          = 22
+    protocol         = "tcp"
+    cidr_blocks      = ["0.0.0.0/0"]
+    }
+
+    ingress {
+    description      = "Jenkins port"
+    from_port        = 8080
+    to_port          = 8080
     protocol         = "tcp"
     cidr_blocks      = ["0.0.0.0/0"]
     }
@@ -46,7 +53,6 @@ resource "aws_security_group" "demo-sg" {
   }
 }
 
-## Create VPC 
 resource "aws_vpc" "dpp-vpc" {
   cidr_block = "10.1.0.0/16"
   tags = {
@@ -55,7 +61,6 @@ resource "aws_vpc" "dpp-vpc" {
   
 }
 
-## Create Subnet
 resource "aws_subnet" "dpp-public-subnet-01" {
   vpc_id = aws_vpc.dpp-vpc.id
   cidr_block = "10.1.1.0/24"
@@ -65,8 +70,6 @@ resource "aws_subnet" "dpp-public-subnet-01" {
     Name = "dpp-public-subent-01"
   }
 }
-
-## Create Subnet
 
 resource "aws_subnet" "dpp-public-subnet-02" {
   vpc_id = aws_vpc.dpp-vpc.id
@@ -78,7 +81,6 @@ resource "aws_subnet" "dpp-public-subnet-02" {
   }
 }
 
-## Create Internet Gateway
 resource "aws_internet_gateway" "dpp-igw" {
   vpc_id = aws_vpc.dpp-vpc.id 
   tags = {
@@ -86,7 +88,6 @@ resource "aws_internet_gateway" "dpp-igw" {
   } 
 }
 
-## Create Route Table
 resource "aws_route_table" "dpp-public-rt" {
   vpc_id = aws_vpc.dpp-vpc.id 
   route {
@@ -95,14 +96,10 @@ resource "aws_route_table" "dpp-public-rt" {
   }
 }
 
-## Create Route Table Association
-
 resource "aws_route_table_association" "dpp-rta-public-subnet-01" {
   subnet_id = aws_subnet.dpp-public-subnet-01.id
   route_table_id = aws_route_table.dpp-public-rt.id   
 }
-
-## Create Route Table Association
 
 resource "aws_route_table_association" "dpp-rta-public-subnet-02" {
   subnet_id = aws_subnet.dpp-public-subnet-02.id 
