@@ -5,6 +5,7 @@ provider "aws" {
   secret_key = var.aws_secret_key
 }
 
+## Create 3 ==> Ec2
 resource "aws_instance" "demo-server" {
     ami = "ami-053b0d53c279acc90"
     instance_type = "t2.micro"
@@ -18,6 +19,7 @@ for_each = toset(["jenkins-master", "build-slave", "ansible"])
    }
 }
 
+## Create Security Group
 resource "aws_security_group" "demo-sg" {
   name        = "demo-sg"
   description = "SSH Access"
@@ -53,6 +55,7 @@ resource "aws_security_group" "demo-sg" {
   }
 }
 
+## Create VPC 
 resource "aws_vpc" "dpp-vpc" {
   cidr_block = "10.1.0.0/16"
   tags = {
@@ -61,6 +64,7 @@ resource "aws_vpc" "dpp-vpc" {
   
 }
 
+## Create 2 ==> Subnets 
 resource "aws_subnet" "dpp-public-subnet-01" {
   vpc_id = aws_vpc.dpp-vpc.id
   cidr_block = "10.1.1.0/24"
@@ -80,13 +84,15 @@ resource "aws_subnet" "dpp-public-subnet-02" {
     Name = "dpp-public-subent-02"
   }
 }
-
+## Create Internet Gateway
 resource "aws_internet_gateway" "dpp-igw" {
   vpc_id = aws_vpc.dpp-vpc.id 
   tags = {
     Name = "dpp-igw"
   } 
 }
+
+## Create Route Table
 
 resource "aws_route_table" "dpp-public-rt" {
   vpc_id = aws_vpc.dpp-vpc.id 
@@ -95,6 +101,8 @@ resource "aws_route_table" "dpp-public-rt" {
     gateway_id = aws_internet_gateway.dpp-igw.id 
   }
 }
+
+## Create 2 ==> Route Table Association 
 
 resource "aws_route_table_association" "dpp-rta-public-subnet-01" {
   subnet_id = aws_subnet.dpp-public-subnet-01.id
